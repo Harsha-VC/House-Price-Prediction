@@ -1,0 +1,400 @@
+import numpy as np
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+os.getcwd()
+
+#os.chdir('C:\\Users\\Asus\\Desktop\\Python\\Gourabh Python\\Datasets')
+os.chdir('C:\\Users\\Asus\\Desktop\\Python\\Gourabh Python\\Datasets')
+
+
+#Getting data
+house= pd.read_csv('wk3_kc_house_train_data.csv')
+
+house_val= pd.read_csv('wk3_kc_house_valid_data.csv')
+
+house_test= pd.read_csv('wk3_kc_house_test_data.csv')
+
+
+# Read data
+house
+
+#Knowing Datatypes of variables
+house.dtypes
+
+#Describing Data
+house.describe()
+
+# Checking NUll values
+# It is observed that there are no null values in dataset
+house.isnull().sum()
+
+#Univariate Analysis
+#Univarite analysis is done to know the distribution of significant variables. We dont compare two or more variables in this type of analysis. Histogram or Box plots can be plotted to understand the nature of the distribution of varibales. Like Noramlly distributed or Right skewed, Left Skewed etc.
+
+#Box Plot of Variable 'Price', which is target variable for our problem. It is observed that the distribution is right skewed
+
+#Box Plot of Price column in Training Dataset
+#Price Variable is right skewed data. 
+
+
+house.boxplot(column=['price'], notch=True, figsize= (5,5))
+plt.show()
+
+# The magnitude of skew for Price variable
+print ("The Skewness of variable 'Price' is", (house['price'].skew()))
+
+
+### Histogram of Variable 'Price' . We can see that data is not normally distributed
+#Histogram of Price data, it is not normally distributed
+house.hist('price',bins=15)
+
+#Boxplot of Sqft_living variable
+# It is also right skewed data
+house.boxplot(['sqft_living'])
+plt.plot()
+
+Histrogram of variable 'Sqft_Living'
+Since it is also skewed distrbution, we need to transform the data. We do it in modelling stage
+
+
+house.hist('sqft_living',bins=15)
+plt.show()
+
+#print('Skewness of varible "Sqft_living: ", house['sqft_living'].skew())
+print ("The Skewness of variable 'Price' is", (house['sqft_living'].skew()))
+
+
+Histogram of Latitude
+
+house.hist('lat', bins=15)
+plt.title('Latitude distribution')
+plt.xlabel('Latitude')
+plt.ylabel('Frequency')
+plt.plot
+
+
+Plotting pair-plot, which helps us to understand the relationship between the variables
+sns.pairplot(house)
+
+plt.matshow(house.corr())
+plt.show()
+
+
+Reading Correlation Coefficients of all possible combinations in Dataset
+corr= house.corr()
+corr.style.background_gradient(cmap='BrBG')
+# 'RdBu_r' & 'BrBG' are other good diverging colormaps
+
+#removing unwanted columns
+house= house.drop('id', axis=1)
+
+Importing some more libraries, which are required for Linear Regression model
+
+
+import numpy as np
+import pandas as pd 
+from sklearn.model_selection import train_test_split
+from sklearn import linear_model
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn import metrics
+from sklearn.model_selection import cross_val_score
+import matplotlib.pyplot as plt
+import seaborn as sns
+%matplotlib inline
+import warnings
+warnings.filterwarnings('ignore')
+
+Simple Linear Regression. Only considering 'Sqft_Living' as a Independent Variable
+since variable 'sqft_living' as high corr-coefficient with variable 'price' , let us consider the same for fitting model.
+Let us define Independent and Dependent Variables for first Simple Linear Regression model
+
+#Fitting model based on sqft living as X and Price as Y (Simple LR) 
+X_train= house[['sqft_living']]
+y_train= house[['price']]
+
+X_val= house_val[['sqft_living']]
+y_val= house_val[['price']]
+
+X_test_slr= house_test[['sqft_living']]
+y_test_slr= house_test[['price']]
+
+
+Even though the variables are not normally disrtibuted , we just check fitting model without transforming them. Just to see how better the model can be.
+
+#Fitting model
+
+lr = linear_model.LinearRegression()
+lr.fit(X_train,y_train)
+
+pred_val= lr.predict(X_val)
+from sklearn.metrics import r2_score
+
+print('Co-efficient: ',lr.coef_)
+print('Intercept: ',lr.intercept_)
+print('R2 value: %.2f' % r2_score( np.array(y_val), pred_val))
+print('RMSE: ', np.sqrt(np.mean(pred_val-np.array(y_val))**2))
+
+X_train = np.array(house['sqft_living'], dtype=pd.Series).reshape(-1,1)
+y_train = np.array(house['price'], dtype=pd.Series)
+lr.fit(X_train,y_train)
+
+X_test = np.array(house_val['sqft_living'], dtype=pd.Series).reshape(-1,1)
+y_test = np.array(house_val['price'], dtype=pd.Series)
+
+pred = lr.predict(X_test)
+rmsesm = float(format(np.sqrt(metrics.mean_squared_error(y_test,pred)),'.3f'))
+rtrsm = float(format(lr.score(X_train, y_train),'.3f'))
+rtesm = float(format(lr.score(X_test, y_test),'.3f'))
+#cv = float(format(cross_val_score(lr,df[['sqft_living']],df['price'],cv=5).mean(),'.3f'))
+
+print ("Average Price for Test Data: {:.3f}".format(y_test.mean()))
+print('Intercept: {}'.format(lr.intercept_))
+print('Coefficient: {}'.format(lr.coef_))
+
+print('RMSE: ', np.sqrt(np.mean(pred-y_test)**2))
+print('R2 value: ',r2_score(y_test,pred))
+
+
+
+Graphical Interpretation of the fitted line (Model) , Simple Linear Regression
+plt.scatter(X_test, y_test, color= 'blue', alpha=.5)
+plt.plot(X_test, pred, color= 'red')
+plt.xlabel('Sqft_Living')
+plt.ylabel('Price')
+plt.title('Price V/S Sqft_Living')
+plt.show()
+
+
+#Let's explore Residuals Plot for the fitted line
+#WE have Heteroscedasticity (variability of y is not constant along X)
+plt.scatter(X_test, pred-y_test)
+plt.plot(X_test, np.array([0])*X_test, color='r')
+plt.show()
+
+We can see that the residuals are not constant as the Independent Variable varies. This is happening beacause our price & sqft_living variables were not normally distributed.
+
+Since the Price variable is not normally distributed, applied Logarithmic Transformation.
+See the distribution of transformed variable, it is almost normal
+
+house['Price_log']= np.log(house['price'])
+house.hist('Price_log', bins=12)
+plt.xlabel('Log(Price)' )
+plt.ylabel('Frequency')
+plt.show()
+
+Let us see the distribution of sqft_living
+# Sqft living distribution, this is also not normally distributed
+
+house.hist('sqft_living')
+plt.plot()
+
+
+#Applyting Log to Sqft living attribute, normally distributed
+
+
+house['sqft_living_log']=  np.log(house['sqft_living'])
+
+house.hist('sqft_living_log')
+plt.xlabel('log(sqft_living)')
+plt.ylabel('Frequency')
+plt.plot()
+
+
+#Fitting model based on Log transformed Sqft_living & Price
+import math
+
+X_train_log= house[['sqft_living_log']]
+y_train_log= house[['Price_log']]
+
+lr.fit(X_train_log,y_train_log)
+
+y_test= house_val[['price']] 
+y_test_= np.array(y_test).reshape(9635 ,1)
+
+y_pred_log= lr.predict(np.log(X_val))
+#pred_val= lr.predict(X_val)
+#print(y_pred_log.shape)
+
+
+y_pred_al= np.exp(y_pred_log)
+y_pred_al
+
+
+#y_pred_log
+
+y_test_log= np.log(house_val['price'])
+
+print(r2_score(y_test_log,y_pred_log))
+
+#print('RMSE of Log transformed model: ',np.sqrt(np.mean(y_test_log- y_pred_log)**2))
+
+print('RMSE of actual model: ',np.sqrt(np.mean(y_pred_al- y_test)**2))
+print('Co-efficient:', lr.coef_)
+print('Intercept: ', lr.intercept_)
+
+plt.scatter(house['bathrooms'], house['price'])
+plt.title('Price vs Bathroom')
+plt.xlabel('Bathrooms')
+plt.ylabel('Price')
+plt.show()
+
+plt.scatter(house['grade'], house['price'])
+plt.title('Price vs Grade')
+plt.xlabel('Grade')
+plt.ylabel('Price')
+plt.show()
+
+
+plt.scatter(np.log(X_val),y_test_log )
+plt.plot(np.log(X_val), y_pred_log, color='r')
+plt.plot()
+
+
+from sklearn.metrics import r2_score
+
+house_log= np.log(house['sqft_living'])
+
+house_log_val= np.log(house_val['sqft_living'])
+
+X_train= pd.concat([house_log, house[['bathrooms', 'grade']]], axis=1)
+
+y_train_log= np.log(house['price'])
+
+X_test= pd.concat([house_log_val, house_val[['bathrooms', 'grade']]], axis=1)
+
+y_test= house_val['price']
+
+y_test_log=np.log(np.array(y_test)).reshape(9635,1)
+
+#y_test= y_test.reshape(9635,1)
+
+
+X_train.tail()
+
+y_train_log
+
+lr2 = linear_model.LinearRegression()
+
+lr2.fit(X_train, y_train_log)
+
+y_pred_log1= lr2.predict(X_test)
+
+y_pred_log1= y_pred_log.reshape(9635,1)
+
+y_pred1= np.exp(y_pred_log1)
+
+y_pred1
+
+#print('RMSE of MLR:', np.sqrt(np.mean(y_pred1- np.array(y_test))**2))
+
+#print('R2 value: ',r2_score(house_val['price']),y_pred1)
+
+#print(r2_score(y_test_log,y_pred_log))
+
+print('R2 value for Sqft_living, Bathrooms, Grade: ',r2_score(y_test, y_pred1))
+
+print('RMSE for Sqft_living, Bathrooms, Grade:', np.sqrt(np.mean(y_pred_log1- y_test_log)**2))
+
+
+print('Coefficients: ', lr2.coef_)
+print('Intercept: ', lr2.intercept_)
+
+
+
+y_test_lr2= np.array(house_test['price'])
+
+house_test['log_price']= np.log(house_test['price'])
+
+house_test['log_sqft_living']= np.log(house_test['sqft_living'])
+
+X_test_lr2= house_test[['log_sqft_living', 'bathrooms', 'grade']]
+
+
+
+#y_test_lr2= y_test_lr1.reshape(2217,1)
+
+#y_test_lr2_pred= lr2.predict()
+
+y_test_pred= lr2.predict(X_test_lr2)
+
+
+ytest= np.array(house_test['log_price'])
+
+ytest= ytest.reshape(2217,1)
+
+y_test_pred = y_test_pred.reshape(2217,1)
+
+
+#print('R2 value: ',r2_score(ytest, y_test_pred))
+
+y_test_lr2= y_test_lr2.reshape(2217,1)
+
+print('RMSE for Sqft_living, Bathrooms, Grade: ', np.sqrt(np.mean((y_test_pred- np.array(house_test['log_price']))**2)))
+
+
+print('R2 value for Sqft_living, Bathrooms, Grade: ',r2_score(y_test_lr2, ans))
+
+print('Coefficients: ', lr2.coef_)
+print('Intercept: ', lr2.intercept_)
+
+
+Interpretation of model
+Fitted model : Log(Price)= 0.44(Log(Sqft_living)) - 0.017(Bathroom)+ 0.20655 (Grade)
+
+Even though in scatter plot of Price VS Bathroom, it showed positive correlation, we got negative coeffcient for the same.
+
+RMSE: 0.6545705762062692,
+R2 value on test data: 0.5362362823769649,
+Coefficients: [ 0.44349117 , -0.01796606, 0.20655003]. ,
+Intercept: 8.154872784029795
+
+
+Predicted values of price are plotted with each scatter plot to compare with actual values
+plt.scatter(house_test['sqft_living'], ans, label='Predicted',color='blue')
+plt.scatter(house_test['sqft_living'],y_test_lr2, label='Actual', color='r', alpha=.2 )
+plt.legend(loc='upper left')
+plt.xlabel('Sqft Living')
+plt.ylabel('Price')
+plt.title('Price Vs Sqft Living')
+plt.show()
+
+plt.scatter(house_test['bathrooms'], ans,label='Predicted', color='blue')
+plt.scatter(house_test['bathrooms'],y_test_lr2,label='Actual' , color='r', alpha=.2 )
+plt.legend(loc='upper left')
+plt.ylabel('Price')
+plt.xlabel('Bathrooms')
+plt.title('Price Vs Bathrooms')
+plt.show()
+
+
+plt.scatter(house_test['grade'], ans,label='Predicted', color='blue')
+plt.scatter(house_test['grade'],y_test_lr2,label='Actual' , color='r', alpha=.1 )
+plt.legend(loc='upper left')
+plt.ylabel('Price')
+plt.xlabel('Grade')
+plt.title('Price Vs Grade')
+plt.show()
+
+
+Conclusion
+Study has been done on probable significant variables to fit best model based on correlation coefficients. Understood the intuition of R2. and significance of the same. The aim of a model should be to generalize the model so that it gives optimum results on unknown dataset.
+
+Right now, I dont have much clarity on Hypothesis testing, heteroscedasticity etc hence Interpretation of model with p-value, adjusted R2, t-score is not possible.)
+
+
+
+Conclusion
+Study has been done on probable significant variables to fit best model based on correlation coefficients. Understood the intuition of R2. and significance of the same. The aim of a model should be to generalize the model so that it gives optimum results on unknown dataset.
+
+Right now, I dont have much clarity on Hypothesis testing, heteroscedasticity etc hence Interpretation of model with p-value, adjusted R2, t-score is not possible.
+
+
+
+
+
+
+
+
